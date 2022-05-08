@@ -1,0 +1,41 @@
+/**********
+ Begin helpers.txt
+ These are helper functions for MagicaVoxel since #include doesn't seem to be a thing for glsl?
+ **********/
+float inner( float sd )
+{
+    return sd < 0;
+}
+
+float outer ( float sd )
+{
+    return sd > 0;
+}
+
+// Change the vec3 to be relative to the current selection volume
+vec3 center_in_volume(vec3 v) 
+{
+    vec3 mid = i_volume_size/2.0;
+    vec3 center = v-mid;
+    return center;
+}
+
+vec2 get_plane(vec3 v, float axis)
+{
+    // 1 = X up, 2 = Y up, 3 = Z up
+    switch(floor(axis))
+    {
+        case 1:
+            return v.yz;
+        case 2:
+            return v.xz;
+        case 3:
+            return v.xy;
+        default:
+            return vec2(0.0);
+    }
+}
+
+/**********
+ End helpers.txt
+ **********/
