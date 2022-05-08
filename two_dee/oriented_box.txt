@@ -53,9 +53,6 @@ vec2 get_plane(vec3 v, float axis)
 // a and b are the endpoints of the box
 float sdOrientedBox(vec2 p, vec2 a, vec2 b, float thickness)
 {
-    // Bounds seems to be treated as a radius so divide by 2
-    //bounds = bounds/2;
-
     float l = length(b-a);
     vec2 d = (b-a)/l;
     vec2 q = (p-(a+b)*0.5);
