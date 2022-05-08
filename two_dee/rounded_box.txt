@@ -1,0 +1,74 @@
+// xs_begin
+// author : '@partlyatomic'
+// arg : { name = 'Axis' var = 'm_axis' range = '1 3' value = '3' step = '1' precision = '1' }
+// arg : { name = 'Roundness Top Right'  var = 'm_roundness_x'  range = '0 1024'  value = '5'  step = '1'  precision = '1' }
+// arg : { name = 'Roundness Bottom Right'  var = 'm_roundness_y'  range = '0 1024'  value = '5'  step = '1'  precision = '1' }
+// arg : { name = 'Roundness Top Left'  var = 'm_roundness_z'  range = '0 1024'  value = '5'  step = '1'  precision = '1' }
+// arg : { name = 'Roundness Bottom Left'  var = 'm_roundness_w'  range = '0 1024'  value = '5'  step = '1'  precision = '1' }
+
+// xs_end
+
+/**********
+ Begin helpers.txt
+ These are helper functions for MagicaVoxel since #include doesn't seem to be a thing for glsl?
+ **********/
+float inner( float sd )
+{
+    return sd < 0;
+}
+
+float outer ( float sd )
+{
+    return sd > 0;
+}
+
+// Change the vec3 to be relative to the current selection volume
+vec3 center_in_volume(vec3 v) 
+{
+    vec3 mid = i_volume_size/2.0;
+    vec3 center = v-mid;
+    return center;
+}
+
+vec2 get_plane(vec3 v, float axis)
+{
+    // 1 = X up, 2 = Y up, 3 = Z up
+    switch(floor(axis))
+    {
+        case 1:
+            return v.yz;
+        case 2:
+            return v.xz;
+        case 3:
+            return v.xy;
+        default:
+            return vec2(0.0);
+    }
+}
+
+/**********
+ End helpers.txt
+ **********/
+
+float sdRoundedBox(vec2 p, vec2 bounds, vec4 roundness)
+{
+    // Bounds seems to be treated as a radius so divide by 2
+    bounds = bounds/2;
+
+    roundness.xy = (p.x > 0.0) ? roundness.xy : roundness.zw;
+    roundness.x = (p.y > 0.0) ? roundness.x : roundness.y;
+    vec2 q = abs(p) - bounds + roundness.x;
+    return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - roundness.x;
+}
+
+float map(vec3 v)
+{
+    vec3 center = center_in_volume(v);
+    vec2 p = get_plane(center, m_axis);
+
+    // Constrain to the bounds of the box on the chosen axis
+    vec2 plane_bounds = get_plane(i_volume_size, m_axis);
+
+    vec4 roundness = vec4(m_roundness_x, m_roundness_y, m_roundness_z, m_roundness_w);
+    return inner(sdRoundedBox(p, plane_bounds, roundness));
+}
