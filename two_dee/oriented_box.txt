@@ -1,0 +1,76 @@
+// xs_begin
+// author : '@partlyatomic'
+// arg : { name = 'Axis' var = 'm_axis' range = '1 3' value = '3' step = '1' precision = '1' }
+// arg : { name = 'P1_x'  var = 'm_p1x'  range = '-256 256'  value = '-5'  step = '1'  precision = '1' }
+// arg : { name = 'P1_y'  var = 'm_p1y'  range = '-256 256'  value = '-5'  step = '1'  precision = '1' }
+// arg : { name = 'P2_x'  var = 'm_p2x'  range = '-256 256'  value = '5'  step = '1'  precision = '1' }
+// arg : { name = 'P2_y'  var = 'm_p2y'  range = '-256 256'  value = '5'  step = '1'  precision = '1' }
+// arg : { name = 'Thickness'  var = 'm_thickness'  range = '0 1024'  value = '3'  step = '1'  precision = '1' }
+// xs_end
+
+/**********
+ Begin helpers.txt
+ These are helper functions for MagicaVoxel since #include doesn't seem to be a thing for glsl?
+ **********/
+float inner( float sd )
+{
+    return sd < 0;
+}
+
+float outer ( float sd )
+{
+    return sd > 0;
+}
+
+// Change the vec3 to be relative to the current selection volume
+vec3 center_in_volume(vec3 v) 
+{
+    vec3 mid = i_volume_size/2.0;
+    vec3 center = v-mid;
+    return center;
+}
+
+vec2 get_plane(vec3 v, float axis)
+{
+    // 1 = X up, 2 = Y up, 3 = Z up
+    switch(floor(axis))
+    {
+        case 1:
+            return v.yz;
+        case 2:
+            return v.xz;
+        case 3:
+            return v.xy;
+        default:
+            return vec2(0.0);
+    }
+}
+
+/**********
+ End helpers.txt
+ **********/
+
+// a and b are the endpoints of the box
+float sdOrientedBox(vec2 p, vec2 a, vec2 b, float thickness)
+{
+    // Bounds seems to be treated as a radius so divide by 2
+    //bounds = bounds/2;
+
+    float l = length(b-a);
+    vec2 d = (b-a)/l;
+    vec2 q = (p-(a+b)*0.5);
+    q = mat2(d.x, -d.y, d.y, d.x)*q;
+    q = abs(q)-vec2(l, thickness)*0.5;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+}
+
+float map(vec3 v)
+{
+    vec3 center = center_in_volume(v);
+    vec2 p = get_plane(center, m_axis);
+
+    vec2 a = vec2(m_p1x, m_p1y);
+    vec2 b = vec2(m_p2x, m_p2y);
+
+    return inner(sdOrientedBox(p, a, b, m_thickness));
+}
